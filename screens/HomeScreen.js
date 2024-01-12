@@ -62,6 +62,8 @@ const HomeScreen = ({navigation}) => {
     maxWidth: 200,
     maxHeight: 200,
     cameraType: 'back',
+    quality: 1,
+    includeBase64: true,
   };
   const launchCamera = () => {
     ImagePicker.launchCamera(options, response => {
@@ -84,7 +86,28 @@ const HomeScreen = ({navigation}) => {
         console.log('Error occured: ', response.error);
       } else {
         let imageUri = response.uri || response.assets?.[0]?.uri;
-        setSelectedImage(imageUri);
+        setSelectedImage('Image selected...');
+        let formData = new FormData();
+        formData.append('file', {
+          uri: imageUri,
+          name: response.assets[0].fileName,
+          type: response.assets[0].type,
+        });
+        console.log({
+          uri: imageUri,
+          name: response.assets[0].fileName,
+          type: response.assets[0].type,
+        });
+        fetch('https://us-central1-plantsaver-410716.cloudfunctions.net/predicts',{
+          method: 'POST',
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          body: formData,
+          })
+          .then(resp => resp.json())
+          .then(res => {setSelectedImage(JSON.stringify(res));})
+	  .catch(error => {setSelectedImage('Failed');});
       }
     });
   };
